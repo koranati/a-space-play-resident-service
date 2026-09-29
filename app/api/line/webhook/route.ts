@@ -1,0 +1,4 @@
+import crypto from 'crypto';import {NextRequest,NextResponse} from 'next/server';
+function valid(raw:string,signature:string|null){const secret=process.env.LINE_CHANNEL_SECRET;if(!secret||!signature)return false;const expected=crypto.createHmac('sha256',secret).update(raw).digest('base64');try{return crypto.timingSafeEqual(Buffer.from(expected),Buffer.from(signature))}catch{return false}}
+export async function POST(req:NextRequest){const raw=await req.text();const signature=req.headers.get('x-line-signature');if(!valid(raw,signature))return NextResponse.json({error:'invalid signature'},{status:401});let payload:any;try{payload=JSON.parse(raw)}catch{return NextResponse.json({error:'invalid json'},{status:400})}for(const event of payload.events||[]){console.log('LINE event',event.type,event.source?.type)}return NextResponse.json({ok:true})}
+export async function GET(){return NextResponse.json({service:'A Space Play LINE webhook',status:'ready'})}
